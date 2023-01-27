@@ -1,5 +1,6 @@
 import argparse, pathlib, os, time, keyboard
 import cv2 as cv
+import pascal_voc
 
 parser = argparse.ArgumentParser()
 
@@ -59,9 +60,13 @@ def process_image(image : str):
         drawing = False
 
     cv_image = cv.imread(image, cv.IMREAD_UNCHANGED)
-    cv_image = resize_image(cv_image, width=1920)
+    #cv_image = resize_image(cv_image, width=1920)
     cv.imshow('Image Display', cv_image)
     cv.setMouseCallback('Image Display', mouse_callback)
+
+    config = pascal_voc.Config(image, cv_image)
+
+    keyboard.add_hotkey('space', timeout=1, callback=next_image)
 
     while drawing:
         cv_draw_image = cv_image.copy()
@@ -81,12 +86,10 @@ def process_image(image : str):
             mouse_points['up'] = None
         else:
             cv.imshow('Image Display', cv_draw_image)
-
-        keyboard.add_hotkey('space', timeout=1, callback=next_image)
             
         cv.waitKey(1)
 
-    return markers
+    return config
 
 def main():
     args = parser.parse_args()
@@ -94,10 +97,12 @@ def main():
     if pathlib.Path.exists(args.images):
         for root, dirs, files in os.walk(args.images):
             for file in files:
-                path = os.path.join(root, file)
-                print(path)
+
+                path = os.path.abspath(os.path.join(root, file))
+
                 if is_image(path):
-                    process_image(path)
+                    config = process_image(path)
+                    print(config.to_xml())
 
 if __name__ == '__main__':
     parser.add_argument('--images', type=pathlib.Path, required=True)
