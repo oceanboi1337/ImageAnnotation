@@ -1,6 +1,6 @@
 import argparse, pathlib, os, time, keyboard
 import cv2 as cv
-import pascal_voc
+import pascal_voc, gui
 
 parser = argparse.ArgumentParser()
 
@@ -55,6 +55,11 @@ def process_image(image : str):
                 if is_within(start, end, current_point):
                     del markers[i]
 
+        elif event == cv.EVENT_LBUTTONDBLCLK:
+
+            result = gui.InputBox().show()
+            print(result)
+
     def next_image():
         nonlocal drawing
         drawing = False
@@ -76,17 +81,18 @@ def process_image(image : str):
 
         #print(mouse_points, current_point, markers)
 
-        if (mouse_points['down'] and not mouse_points['up']) and (current_point[0] != None and current_point[1] != None):
+        if (mouse_points['down'] != None and mouse_points['up'] == None) and (current_point[0] != None and current_point[1] != None):
             cv.rectangle(cv_draw_image, mouse_points['down'], current_point, [0, 0, 255], thickness=2)
-            cv.imshow('Image Display', cv_draw_image)
-        elif mouse_points['up'] != None:
+        
+        elif mouse_points['up'] != None and mouse_points['down'] != None:
             start, end = order_rect(mouse_points['down'], mouse_points['up'])
             markers.append([start, end])
-            mouse_points['down'] = None
-            mouse_points['up'] = None
-        else:
-            cv.imshow('Image Display', cv_draw_image)
+            mouse_points = {'down': None, 'up': None}
             
+        elif mouse_points['up'] != None and mouse_points['down'] == None:
+            mouse_points = {'down': None, 'up': None}
+
+        cv.imshow('Image Display', cv_draw_image)
         cv.waitKey(1)
 
     return config
